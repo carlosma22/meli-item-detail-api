@@ -1,9 +1,5 @@
 import { Injectable, Logger, OnModuleInit, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  ItemRepositoryPort,
-  ITEM_REPOSITORY_PORT,
-} from '@domain/ports/outbound/item.repository.port';
 import { CachePort, CACHE_PORT } from '@domain/ports/outbound/cache.port';
 import { Item, Seller, ItemAttribute } from '@domain/entities/item.entity';
 import { ItemDescription } from '@domain/entities/item-description.entity';

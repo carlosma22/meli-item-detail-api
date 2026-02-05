@@ -57,8 +57,8 @@ jobs:
 
       - name: Run integration tests
         run: |
-          # Test API endpoints
-          curl -f http://localhost:3001/api/v1/items/search?q=test || exit 1
+          # Test API endpoints with proper pagination parameters
+          curl -f "http://localhost:3001/api/v1/items/search?query=test&page=1&limit=10" || exit 1
 
       - name: Show logs on failure
         if: failure()
