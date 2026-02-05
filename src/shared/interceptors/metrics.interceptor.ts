@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { MetricsService } from '../services/metrics.service';
@@ -23,7 +18,7 @@ export class MetricsInterceptor implements NestInterceptor {
     const startTime = Date.now();
 
     console.log('[MetricsInterceptor] Intercepting:', method, route);
-    
+
     if (!this.metricsService) {
       console.error('[MetricsInterceptor] MetricsService is not available!');
       return next.handle();
@@ -39,12 +34,7 @@ export class MetricsInterceptor implements NestInterceptor {
 
           this.metricsService.decrementHttpRequestsInProgress(method, route);
           this.metricsService.incrementHttpRequests(method, route, statusCode);
-          this.metricsService.observeHttpRequestDuration(
-            method,
-            route,
-            statusCode,
-            duration,
-          );
+          this.metricsService.observeHttpRequestDuration(method, route, statusCode, duration);
         },
         error: (error) => {
           const duration = (Date.now() - startTime) / 1000;
@@ -52,12 +42,7 @@ export class MetricsInterceptor implements NestInterceptor {
 
           this.metricsService.decrementHttpRequestsInProgress(method, route);
           this.metricsService.incrementHttpRequests(method, route, statusCode);
-          this.metricsService.observeHttpRequestDuration(
-            method,
-            route,
-            statusCode,
-            duration,
-          );
+          this.metricsService.observeHttpRequestDuration(method, route, statusCode, duration);
         },
       }),
     );

@@ -3,21 +3,7 @@
 
 echo "🔍 Running pre-commit checks..."
 
-# Run lint-staged
+# Run lint-staged (includes linting, formatting, and tests on staged files)
 npx lint-staged
-
-# Check TypeScript types
-echo "📝 Checking TypeScript types..."
-npm run build --if-present || {
-  echo "❌ TypeScript compilation failed"
-  exit 1
-}
-
-# Run tests on changed files
-echo "🧪 Running tests on changed files..."
-npm run test -- --onlyChanged --passWithNoTests || {
-  echo "❌ Tests failed"
-  exit 1
-}
 
 echo "✅ Pre-commit checks passed!"

@@ -145,7 +145,7 @@ describe('Item Entity', () => {
       const item = new Item(
         'MLA123456789',
         'Test Item',
-        1000.50,
+        1000.5,
         'ARS',
         10,
         'new',

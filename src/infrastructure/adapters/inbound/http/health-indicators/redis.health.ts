@@ -14,7 +14,7 @@ export class RedisHealthIndicator extends HealthIndicator {
     try {
       const testKey = 'health-check-test';
       const testValue = 'ok';
-      
+
       await this.cacheManager.set(testKey, testValue, 5000);
       const value = await this.cacheManager.get(testKey);
       await this.cacheManager.del(testKey);

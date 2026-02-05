@@ -23,10 +23,7 @@ export class HealthController {
     return this.health.check([
       // Verifica endpoint propio de items
       () =>
-        this.http.pingCheck(
-          'items-endpoint',
-          `${process.env.URL_API}/items/search?page=1&limit=1`,
-        ),
+        this.http.pingCheck('items-endpoint', `${process.env.URL_API}/items/search?page=1&limit=1`),
 
       // Verifica Redis
       () => this.redis.isHealthy('redis'),

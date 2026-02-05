@@ -3,10 +3,10 @@ import { Type } from 'class-transformer';
 import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class SearchQueryDto {
-  @ApiProperty({ 
-    example: 'laptop', 
-    required: false, 
-    description: 'Search query (if empty, returns all items)' 
+  @ApiProperty({
+    example: 'laptop',
+    required: false,
+    description: 'Search query (if empty, returns all items)',
   })
   @IsOptional()
   @IsString()

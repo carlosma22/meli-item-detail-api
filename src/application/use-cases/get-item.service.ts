@@ -1,7 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { GetItemUseCase } from '@domain/ports/inbound/get-item.use-case';
 import { Item } from '@domain/entities/item.entity';
-import { ItemRepositoryPort, ITEM_REPOSITORY_PORT } from '@domain/ports/outbound/item.repository.port';
+import {
+  ItemRepositoryPort,
+  ITEM_REPOSITORY_PORT,
+} from '@domain/ports/outbound/item.repository.port';
 import { ItemNotFoundException } from '@domain/exceptions/domain.exception';
 import { MetricsService } from '@/shared/services/metrics.service';
 

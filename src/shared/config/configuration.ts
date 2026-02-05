@@ -2,7 +2,7 @@ export default () => ({
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   apiPrefix: process.env.API_PREFIX || 'api/v1',
-  
+
   meli: {
     apiBaseUrl: process.env.MELI_API_BASE_URL || 'https://api.mercadolibre.com',
   },

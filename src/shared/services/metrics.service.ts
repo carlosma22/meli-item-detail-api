@@ -1,11 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import {
-  Counter,
-  Histogram,
-  Gauge,
-  register,
-  collectDefaultMetrics,
-} from 'prom-client';
+import { Counter, Histogram, Gauge, register, collectDefaultMetrics } from 'prom-client';
 
 @Injectable()
 export class MetricsService implements OnModuleInit {
@@ -101,11 +95,7 @@ export class MetricsService implements OnModuleInit {
     // No hacer clear() para no borrarlas
   }
 
-  incrementHttpRequests(
-    method: string,
-    route: string,
-    statusCode: number,
-  ): void {
+  incrementHttpRequests(method: string, route: string, statusCode: number): void {
     this.httpRequestsTotal.inc({ method, route, status_code: statusCode });
   }
 
@@ -115,10 +105,7 @@ export class MetricsService implements OnModuleInit {
     statusCode: number,
     durationInSeconds: number,
   ): void {
-    this.httpRequestDuration.observe(
-      { method, route, status_code: statusCode },
-      durationInSeconds,
-    );
+    this.httpRequestDuration.observe({ method, route, status_code: statusCode }, durationInSeconds);
   }
 
   incrementHttpRequestsInProgress(method: string, route: string): void {
@@ -145,27 +132,15 @@ export class MetricsService implements OnModuleInit {
     this.cacheMissesTotal.inc({ operation });
   }
 
-  incrementExternalApiCalls(
-    api: string,
-    endpoint: string,
-    status: 'success' | 'error',
-  ): void {
+  incrementExternalApiCalls(api: string, endpoint: string, status: 'success' | 'error'): void {
     this.externalApiCallsTotal.inc({ api, endpoint, status });
   }
 
-  incrementExternalApiErrors(
-    api: string,
-    endpoint: string,
-    errorType: string,
-  ): void {
+  incrementExternalApiErrors(api: string, endpoint: string, errorType: string): void {
     this.externalApiErrorsTotal.inc({ api, endpoint, error_type: errorType });
   }
 
-  observeExternalApiDuration(
-    api: string,
-    endpoint: string,
-    durationInSeconds: number,
-  ): void {
+  observeExternalApiDuration(api: string, endpoint: string, durationInSeconds: number): void {
     this.externalApiDuration.observe({ api, endpoint }, durationInSeconds);
   }
 

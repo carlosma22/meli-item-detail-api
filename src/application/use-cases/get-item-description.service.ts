@@ -1,7 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { GetItemDescriptionUseCase } from '@domain/ports/inbound/get-item-description.use-case';
 import { ItemDescription } from '@domain/entities/item-description.entity';
-import { ItemRepositoryPort, ITEM_REPOSITORY_PORT } from '@domain/ports/outbound/item.repository.port';
+import {
+  ItemRepositoryPort,
+  ITEM_REPOSITORY_PORT,
+} from '@domain/ports/outbound/item.repository.port';
 import { ItemDescriptionNotFoundException } from '@domain/exceptions/domain.exception';
 
 @Injectable()
