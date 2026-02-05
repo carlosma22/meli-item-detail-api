@@ -30,16 +30,16 @@ jobs:
           EOF
 
       - name: Build Docker images
-        run: docker-compose build
+        run: docker compose build
 
       - name: Start services
-        run: docker-compose up -d
+        run: docker compose up -d
 
       - name: Wait for services to be ready
         run: |
           echo "Waiting for services to start..."
           sleep 30
-          docker-compose ps
+          docker compose ps
 
       - name: Check service health
         run: |
@@ -63,11 +63,11 @@ jobs:
       - name: Show logs on failure
         if: failure()
         run: |
-          docker-compose logs app
-          docker-compose logs redis
-          docker-compose logs prometheus
-          docker-compose logs grafana
+          docker compose logs app
+          docker compose logs redis
+          docker compose logs prometheus
+          docker compose logs grafana
 
       - name: Stop services
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
