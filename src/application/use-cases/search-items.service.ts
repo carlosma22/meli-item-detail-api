@@ -4,6 +4,7 @@ import { ItemRepositoryPort, ITEM_REPOSITORY_PORT } from '@domain/ports/outbound
 import { SearchQuery } from '@domain/value-objects/search-query.vo';
 import { Pagination } from '@domain/value-objects/pagination.vo';
 import { InvalidSearchQueryException } from '@domain/exceptions/domain.exception';
+import { MetricsService } from '@/shared/services/metrics.service';
 
 @Injectable()
 export class SearchItemsService implements SearchItemsUseCase {
@@ -12,6 +13,7 @@ export class SearchItemsService implements SearchItemsUseCase {
   constructor(
     @Inject(ITEM_REPOSITORY_PORT)
     private readonly itemRepository: ItemRepositoryPort,
+    private readonly metricsService: MetricsService,
   ) {}
 
   async execute(query: string, page: number, limit: number): Promise<SearchItemsResult> {
@@ -24,12 +26,14 @@ export class SearchItemsService implements SearchItemsUseCase {
       const pagination = new Pagination(page, limit, result.total);
 
       this.logger.log(`Found ${result.items.length} items out of ${result.total} total`);
+      this.metricsService.incrementItemSearches('success');
 
       return {
         items: result.items,
         pagination,
       };
     } catch (error) {
+      this.metricsService.incrementItemSearches('error');
       if (error instanceof Error) {
         this.logger.error(`Search failed: ${error.message}`);
         throw new InvalidSearchQueryException(error.message);

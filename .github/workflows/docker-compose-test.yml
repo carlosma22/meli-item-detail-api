@@ -1,0 +1,73 @@
+name: Docker Compose Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  docker-compose-test:
+    name: Test Docker Compose Stack
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          NODE_ENV=production
+          PORT=3000
+          REDIS_HOST=redis
+          REDIS_PORT=6379
+          REDIS_TTL=3600000
+          THROTTLE_TTL=60
+          THROTTLE_LIMIT=100
+          LOG_LEVEL=info
+          MELI_API_BASE_URL=https://api.mercadolibre.com
+          EOF
+
+      - name: Build Docker images
+        run: docker-compose build
+
+      - name: Start services
+        run: docker-compose up -d
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for services to start..."
+          sleep 30
+          docker-compose ps
+
+      - name: Check service health
+        run: |
+          # Check app health
+          curl -f http://localhost:3001/api/v1/health || exit 1
+          
+          # Check metrics endpoint
+          curl -f http://localhost:3001/api/v1/metrics || exit 1
+          
+          # Check Prometheus
+          curl -f http://localhost:9093/-/healthy || exit 1
+          
+          # Check Grafana
+          curl -f http://localhost:3002/api/health || exit 1
+
+      - name: Run integration tests
+        run: |
+          # Test API endpoints
+          curl -f http://localhost:3001/api/v1/items/search?q=test || exit 1
+
+      - name: Show logs on failure
+        if: failure()
+        run: |
+          docker-compose logs app
+          docker-compose logs redis
+          docker-compose logs prometheus
+          docker-compose logs grafana
+
+      - name: Stop services
+        if: always()
+        run: docker-compose down -v

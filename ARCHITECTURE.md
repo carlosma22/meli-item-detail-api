@@ -12,7 +12,7 @@ La arquitectura hexagonal organiza el código en tres capas principales:
 
 ```
 ┌─────────────────────────────────────────────────┐
-│         INFRASTRUCTURE LAYER                     │
+│         INFRASTRUCTURE LAYER                    │
 │  ┌───────────────────────────────────────────┐  │
 │  │      APPLICATION LAYER                    │  │
 │  │  ┌─────────────────────────────────────┐  │  │
@@ -24,18 +24,18 @@ La arquitectura hexagonal organiza el código en tres capas principales:
 │  │  │  - Ports (Interfaces)               │  │  │
 │  │  │                                     │  │  │
 │  │  └─────────────────────────────────────┘  │  │
-│  │                                            │  │
-│  │  - Use Cases                               │  │
-│  │  - Application Services                    │  │
-│  │  - DTOs                                    │  │
-│  │                                            │  │
+│  │                                           │  │
+│  │  - Use Cases                              │  │
+│  │  - Application Services                   │  │
+│  │  - DTOs                                   │  │
+│  │                                           │  │
 │  └───────────────────────────────────────────┘  │
-│                                                  │
-│  - Controllers (Inbound Adapters)                │
-│  - Repositories (Outbound Adapters)              │
-│  - HTTP Clients (Outbound Adapters)              │
-│  - Cache (Outbound Adapters)                     │
-│                                                  │
+│                                                 │
+│  - Controllers (Inbound Adapters)               │
+│  - Repositories (Outbound Adapters)             │
+│  - HTTP Clients (Outbound Adapters)             │
+│  - Cache (Outbound Adapters)                    │
+│                                                 │
 └─────────────────────────────────────────────────┘
 ```
 

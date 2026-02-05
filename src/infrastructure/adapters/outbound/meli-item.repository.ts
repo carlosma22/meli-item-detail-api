@@ -6,6 +6,7 @@ import { SearchQuery } from '@domain/value-objects/search-query.vo';
 import { HttpClientPort, HTTP_CLIENT_PORT } from '@domain/ports/outbound/http-client.port';
 import { CachePort, CACHE_PORT } from '@domain/ports/outbound/cache.port';
 import { ConfigService } from '@nestjs/config';
+import { MetricsService } from '@/shared/services/metrics.service';
 
 interface MeliItemResponse {
   id: string;
@@ -42,6 +43,7 @@ export class MeliItemRepository implements ItemRepositoryPort {
     @Inject(HTTP_CLIENT_PORT) private readonly httpClient: HttpClientPort,
     @Inject(CACHE_PORT) private readonly cache: CachePort,
     private readonly configService: ConfigService,
+    private readonly metricsService: MetricsService,
   ) {
     this.baseUrl = this.configService.get<string>('meli.apiBaseUrl', 'https://api.mercadolibre.com');
     this.cacheTtl = this.configService.get<number>('redis.ttl', 3600);
@@ -54,33 +56,47 @@ export class MeliItemRepository implements ItemRepositoryPort {
     const cached = await this.cache.get<Item>(cacheKey);
     if (cached) {
       this.logger.log(`Item found in cache: ${id}`);
+      this.metricsService.incrementCacheHits('item');
       return cached;
     }
 
     this.logger.warn(`Item not found in cache: ${id}`);
+    this.metricsService.incrementCacheMisses('item');
     return null;
   }
 
   // Método público para cargar item desde API (usado solo por data seeder)
   async loadItemFromApi(id: string): Promise<Item | null> {
     const cacheKey = `item:${id}`;
+    const startTime = Date.now();
     
     try {
       this.logger.log(`Loading item from API for seeding: ${id}`);
       const url = `${this.baseUrl}/items/${id}`;
       const response = await this.httpClient.get<MeliItemResponse>(url);
       
+      const duration = (Date.now() - startTime) / 1000;
+      this.metricsService.observeExternalApiDuration('mercadolibre', '/items/:id', duration);
+      this.metricsService.incrementExternalApiCalls('mercadolibre', '/items/:id', 'success');
+      
       const item = this.mapToItemEntity(response);
       await this.cache.set(cacheKey, item, this.cacheTtl);
       
       return item;
     } catch (error: any) {
+      const duration = (Date.now() - startTime) / 1000;
+      this.metricsService.observeExternalApiDuration('mercadolibre', '/items/:id', duration);
+      
       if (error?.response?.status === 404) {
         this.logger.debug(`Item not found in API: ${id}`);
+        this.metricsService.incrementExternalApiCalls('mercadolibre', '/items/:id', 'error');
+        this.metricsService.incrementExternalApiErrors('mercadolibre', '/items/:id', 'not_found');
         return null;
       }
       
       this.logger.error(`Error loading item ${id}: ${error?.message || error}`);
+      this.metricsService.incrementExternalApiCalls('mercadolibre', '/items/:id', 'error');
+      this.metricsService.incrementExternalApiErrors('mercadolibre', '/items/:id', error?.message || 'unknown');
       return null;
     }
   }
@@ -92,33 +108,47 @@ export class MeliItemRepository implements ItemRepositoryPort {
     const cached = await this.cache.get<ItemDescription>(cacheKey);
     if (cached) {
       this.logger.log(`Description found in cache: ${id}`);
+      this.metricsService.incrementCacheHits('description');
       return cached;
     }
 
     this.logger.warn(`Description not found in cache: ${id}`);
+    this.metricsService.incrementCacheMisses('description');
     return null;
   }
 
   // Método público para cargar descripción desde API (usado solo por data seeder)
   async loadDescriptionFromApi(id: string): Promise<ItemDescription | null> {
     const cacheKey = `description:${id}`;
+    const startTime = Date.now();
     
     try {
       this.logger.log(`Loading description from API for seeding: ${id}`);
       const url = `${this.baseUrl}/items/${id}/description`;
       const response = await this.httpClient.get<MeliDescriptionResponse>(url);
       
+      const duration = (Date.now() - startTime) / 1000;
+      this.metricsService.observeExternalApiDuration('mercadolibre', '/items/:id/description', duration);
+      this.metricsService.incrementExternalApiCalls('mercadolibre', '/items/:id/description', 'success');
+      
       const description = this.mapToDescriptionEntity(id, response);
       await this.cache.set(cacheKey, description, this.cacheTtl);
       
       return description;
     } catch (error: any) {
+      const duration = (Date.now() - startTime) / 1000;
+      this.metricsService.observeExternalApiDuration('mercadolibre', '/items/:id/description', duration);
+      
       if (error?.response?.status === 404) {
         this.logger.debug(`Description not found in API: ${id}`);
+        this.metricsService.incrementExternalApiCalls('mercadolibre', '/items/:id/description', 'error');
+        this.metricsService.incrementExternalApiErrors('mercadolibre', '/items/:id/description', 'not_found');
         return null;
       }
       
       this.logger.error(`Error loading description ${id}: ${error?.message || error}`);
+      this.metricsService.incrementExternalApiCalls('mercadolibre', '/items/:id/description', 'error');
+      this.metricsService.incrementExternalApiErrors('mercadolibre', '/items/:id/description', error?.message || 'unknown');
       return null;
     }
   }

@@ -14,9 +14,10 @@ import { SEARCH_ITEMS_USE_CASE } from '@domain/ports/inbound/search-items.use-ca
 import { ITEM_REPOSITORY_PORT } from '@domain/ports/outbound/item.repository.port';
 import { HTTP_CLIENT_PORT } from '@domain/ports/outbound/http-client.port';
 import { CACHE_PORT } from '@domain/ports/outbound/cache.port';
+import { MetricsModule } from './metrics.module';
 
 @Module({
-  imports: [HttpModule],
+  imports: [HttpModule, MetricsModule],
   controllers: [ItemsController],
   providers: [
     {

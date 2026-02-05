@@ -1,15 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { CacheModule } from '@nestjs/cache-manager';
 import { LoggerModule } from 'nestjs-pino';
 import { redisStore } from 'cache-manager-redis-yet';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { ItemsModule } from './infrastructure/modules/items.module';
 import { HealthModule } from './infrastructure/modules/health.module';
 import { MetricsModule } from './infrastructure/modules/metrics.module';
 import { DomainExceptionFilter } from './shared/filters/domain-exception.filter';
 import { LoggingInterceptor } from './shared/interceptors/logging.interceptor';
+import { MetricsInterceptor } from './shared/interceptors/metrics.interceptor';
 import configuration from './shared/config/configuration';
 
 @Module({
@@ -79,12 +80,20 @@ import configuration from './shared/config/configuration';
   ],
   providers: [
     {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
       provide: APP_FILTER,
       useClass: DomainExceptionFilter,
     },
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MetricsInterceptor,
     },
   ],
 })
