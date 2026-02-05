@@ -32,7 +32,9 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('MercadoLibre Item API - Hexagonal Architecture')
-    .setDescription('API para obtener detalles de productos de MercadoLibre usando arquitectura hexagonal')
+    .setDescription(
+      'API para obtener detalles de productos de MercadoLibre usando arquitectura hexagonal',
+    )
     .setVersion('1.0')
     .addTag('items')
     .addTag('health')

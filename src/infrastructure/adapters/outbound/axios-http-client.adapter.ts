@@ -13,16 +13,14 @@ export class AxiosHttpClientAdapter implements HttpClientPort {
   async get<T>(url: string, config?: HttpRequestConfig): Promise<T> {
     try {
       this.logger.debug(`GET request to: ${url}`);
-      
+
       const axiosConfig: AxiosRequestConfig = {
         headers: config?.headers,
         params: config?.params,
         timeout: config?.timeout || 10000,
       };
 
-      const response = await firstValueFrom(
-        this.httpService.get<T>(url, axiosConfig),
-      );
+      const response = await firstValueFrom(this.httpService.get<T>(url, axiosConfig));
 
       return response.data;
     } catch (error) {
@@ -34,16 +32,14 @@ export class AxiosHttpClientAdapter implements HttpClientPort {
   async post<T>(url: string, data?: unknown, config?: HttpRequestConfig): Promise<T> {
     try {
       this.logger.debug(`POST request to: ${url}`);
-      
+
       const axiosConfig: AxiosRequestConfig = {
         headers: config?.headers,
         params: config?.params,
         timeout: config?.timeout || 10000,
       };
 
-      const response = await firstValueFrom(
-        this.httpService.post<T>(url, data, axiosConfig),
-      );
+      const response = await firstValueFrom(this.httpService.post<T>(url, data, axiosConfig));
 
       return response.data;
     } catch (error) {

@@ -1,8 +1,14 @@
 import { Controller, Get, Param, Query, Inject, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { GetItemUseCase, GET_ITEM_USE_CASE } from '@domain/ports/inbound/get-item.use-case';
-import { GetItemDescriptionUseCase, GET_ITEM_DESCRIPTION_USE_CASE } from '@domain/ports/inbound/get-item-description.use-case';
-import { SearchItemsUseCase, SEARCH_ITEMS_USE_CASE } from '@domain/ports/inbound/search-items.use-case';
+import {
+  GetItemDescriptionUseCase,
+  GET_ITEM_DESCRIPTION_USE_CASE,
+} from '@domain/ports/inbound/get-item-description.use-case';
+import {
+  SearchItemsUseCase,
+  SEARCH_ITEMS_USE_CASE,
+} from '@domain/ports/inbound/search-items.use-case';
 import { ItemResponseDto } from '@application/dto/item-response.dto';
 import { ItemDescriptionResponseDto } from '@application/dto/item-description-response.dto';
 import { SearchResponseDto } from '@application/dto/search-response.dto';
@@ -24,9 +30,7 @@ export class ItemsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Search items (query is optional, if empty returns all items)' })
   @ApiResponse({ status: 200, description: 'Search results', type: SearchResponseDto })
-  async search(
-    @Query() searchQuery: SearchQueryDto,
-  ): Promise<SearchResponseDto> {
+  async search(@Query() searchQuery: SearchQueryDto): Promise<SearchResponseDto> {
     const result = await this.searchItemsUseCase.execute(
       searchQuery.query || '',
       searchQuery.page || 1,

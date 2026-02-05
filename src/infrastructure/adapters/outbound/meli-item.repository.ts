@@ -45,13 +45,16 @@ export class MeliItemRepository implements ItemRepositoryPort {
     private readonly configService: ConfigService,
     private readonly metricsService: MetricsService,
   ) {
-    this.baseUrl = this.configService.get<string>('meli.apiBaseUrl', 'https://api.mercadolibre.com');
+    this.baseUrl = this.configService.get<string>(
+      'meli.apiBaseUrl',
+      'https://api.mercadolibre.com',
+    );
     this.cacheTtl = this.configService.get<number>('redis.ttl', 3600);
   }
 
   async findById(id: string): Promise<Item | null> {
     const cacheKey = `item:${id}`;
-    
+
     // SOLO consulta Redis, NO va a la API de MercadoLibre
     const cached = await this.cache.get<Item>(cacheKey);
     if (cached) {
@@ -69,41 +72,45 @@ export class MeliItemRepository implements ItemRepositoryPort {
   async loadItemFromApi(id: string): Promise<Item | null> {
     const cacheKey = `item:${id}`;
     const startTime = Date.now();
-    
+
     try {
       this.logger.log(`Loading item from API for seeding: ${id}`);
       const url = `${this.baseUrl}/items/${id}`;
       const response = await this.httpClient.get<MeliItemResponse>(url);
-      
+
       const duration = (Date.now() - startTime) / 1000;
       this.metricsService.observeExternalApiDuration('mercadolibre', '/items/:id', duration);
       this.metricsService.incrementExternalApiCalls('mercadolibre', '/items/:id', 'success');
-      
+
       const item = this.mapToItemEntity(response);
       await this.cache.set(cacheKey, item, this.cacheTtl);
-      
+
       return item;
     } catch (error: any) {
       const duration = (Date.now() - startTime) / 1000;
       this.metricsService.observeExternalApiDuration('mercadolibre', '/items/:id', duration);
-      
+
       if (error?.response?.status === 404) {
         this.logger.debug(`Item not found in API: ${id}`);
         this.metricsService.incrementExternalApiCalls('mercadolibre', '/items/:id', 'error');
         this.metricsService.incrementExternalApiErrors('mercadolibre', '/items/:id', 'not_found');
         return null;
       }
-      
+
       this.logger.error(`Error loading item ${id}: ${error?.message || error}`);
       this.metricsService.incrementExternalApiCalls('mercadolibre', '/items/:id', 'error');
-      this.metricsService.incrementExternalApiErrors('mercadolibre', '/items/:id', error?.message || 'unknown');
+      this.metricsService.incrementExternalApiErrors(
+        'mercadolibre',
+        '/items/:id',
+        error?.message || 'unknown',
+      );
       return null;
     }
   }
 
   async findDescription(id: string): Promise<ItemDescription | null> {
     const cacheKey = `description:${id}`;
-    
+
     // SOLO consulta Redis, NO va a la API de MercadoLibre
     const cached = await this.cache.get<ItemDescription>(cacheKey);
     if (cached) {
@@ -121,34 +128,62 @@ export class MeliItemRepository implements ItemRepositoryPort {
   async loadDescriptionFromApi(id: string): Promise<ItemDescription | null> {
     const cacheKey = `description:${id}`;
     const startTime = Date.now();
-    
+
     try {
       this.logger.log(`Loading description from API for seeding: ${id}`);
       const url = `${this.baseUrl}/items/${id}/description`;
       const response = await this.httpClient.get<MeliDescriptionResponse>(url);
-      
+
       const duration = (Date.now() - startTime) / 1000;
-      this.metricsService.observeExternalApiDuration('mercadolibre', '/items/:id/description', duration);
-      this.metricsService.incrementExternalApiCalls('mercadolibre', '/items/:id/description', 'success');
-      
+      this.metricsService.observeExternalApiDuration(
+        'mercadolibre',
+        '/items/:id/description',
+        duration,
+      );
+      this.metricsService.incrementExternalApiCalls(
+        'mercadolibre',
+        '/items/:id/description',
+        'success',
+      );
+
       const description = this.mapToDescriptionEntity(id, response);
       await this.cache.set(cacheKey, description, this.cacheTtl);
-      
+
       return description;
     } catch (error: any) {
       const duration = (Date.now() - startTime) / 1000;
-      this.metricsService.observeExternalApiDuration('mercadolibre', '/items/:id/description', duration);
-      
+      this.metricsService.observeExternalApiDuration(
+        'mercadolibre',
+        '/items/:id/description',
+        duration,
+      );
+
       if (error?.response?.status === 404) {
         this.logger.debug(`Description not found in API: ${id}`);
-        this.metricsService.incrementExternalApiCalls('mercadolibre', '/items/:id/description', 'error');
-        this.metricsService.incrementExternalApiErrors('mercadolibre', '/items/:id/description', 'not_found');
+        this.metricsService.incrementExternalApiCalls(
+          'mercadolibre',
+          '/items/:id/description',
+          'error',
+        );
+        this.metricsService.incrementExternalApiErrors(
+          'mercadolibre',
+          '/items/:id/description',
+          'not_found',
+        );
         return null;
       }
-      
+
       this.logger.error(`Error loading description ${id}: ${error?.message || error}`);
-      this.metricsService.incrementExternalApiCalls('mercadolibre', '/items/:id/description', 'error');
-      this.metricsService.incrementExternalApiErrors('mercadolibre', '/items/:id/description', error?.message || 'unknown');
+      this.metricsService.incrementExternalApiCalls(
+        'mercadolibre',
+        '/items/:id/description',
+        'error',
+      );
+      this.metricsService.incrementExternalApiErrors(
+        'mercadolibre',
+        '/items/:id/description',
+        error?.message || 'unknown',
+      );
       return null;
     }
   }
@@ -156,7 +191,7 @@ export class MeliItemRepository implements ItemRepositoryPort {
   async search(searchQuery: SearchQuery): Promise<SearchResult> {
     const queryObj = searchQuery.toObject();
     const queryText = queryObj.query.toLowerCase();
-    
+
     try {
       // Obtener todas las claves de items en Redis
       const itemKeys = await this.cache.keys('item:*');
@@ -165,7 +200,7 @@ export class MeliItemRepository implements ItemRepositoryPort {
       if (itemKeys.length === 0) {
         return { items: [], total: 0 };
       }
-      
+
       // Obtener todos los items de Redis
       const allItems: Item[] = [];
       for (const key of itemKeys) {
@@ -174,24 +209,25 @@ export class MeliItemRepository implements ItemRepositoryPort {
           allItems.push(item);
         }
       }
-      
+
       // Filtrar items por query (si existe)
       let filteredItems = allItems;
       if (queryText) {
-        filteredItems = allItems.filter(item => 
-          item.title.toLowerCase().includes(queryText) ||
-          item.id.toLowerCase().includes(queryText)
+        filteredItems = allItems.filter(
+          (item) =>
+            item.title.toLowerCase().includes(queryText) ||
+            item.id.toLowerCase().includes(queryText),
         );
       }
-      
+
       this.logger.log(`Filtered to ${filteredItems.length} items matching "${queryText || 'all'}"`);
-      
+
       // Aplicar paginación
       const total = filteredItems.length;
       const startIndex = queryObj.offset;
       const endIndex = startIndex + queryObj.limit;
       const paginatedItems = filteredItems.slice(startIndex, endIndex);
-      
+
       return {
         items: paginatedItems,
         total,
@@ -207,21 +243,21 @@ export class MeliItemRepository implements ItemRepositoryPort {
     const queryObj = searchQuery.toObject();
     const queryText = queryObj.query || 'all';
     const cacheKey = `search:${queryText}:${queryObj.page}:${queryObj.limit}`;
-    
+
     try {
       this.logger.log(`Loading search from API for seeding: ${queryText}`);
       const url = `${this.baseUrl}/sites/MLA/search`;
-      
+
       // Si query está vacío, buscar sin filtro (todos los items)
       const params: any = {
         offset: queryObj.offset,
         limit: queryObj.limit,
       };
-      
+
       if (queryObj.query) {
         params.q = queryObj.query;
       }
-      
+
       const response = await this.httpClient.get<MeliSearchResponse>(url, { params });
 
       const result: SearchResult = {
@@ -230,7 +266,7 @@ export class MeliItemRepository implements ItemRepositoryPort {
       };
 
       await this.cache.set(cacheKey, result, this.cacheTtl);
-      
+
       return result;
     } catch (error) {
       this.logger.error(`Error loading search: ${error}`);

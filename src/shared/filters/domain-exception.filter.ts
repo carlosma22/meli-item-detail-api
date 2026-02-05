@@ -18,7 +18,10 @@ export class DomainExceptionFilter implements ExceptionFilter {
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
 
-    if (exception instanceof ItemNotFoundException || exception instanceof ItemDescriptionNotFoundException) {
+    if (
+      exception instanceof ItemNotFoundException ||
+      exception instanceof ItemDescriptionNotFoundException
+    ) {
       status = HttpStatus.NOT_FOUND;
     } else if (exception instanceof InvalidSearchQueryException) {
       status = HttpStatus.BAD_REQUEST;
@@ -32,10 +35,7 @@ export class DomainExceptionFilter implements ExceptionFilter {
       error: exception.name,
     };
 
-    this.logger.error(
-      `${exception.name}: ${exception.message}`,
-      exception.stack,
-    );
+    this.logger.error(`${exception.name}: ${exception.message}`, exception.stack);
 
     response.status(status).json(errorResponse);
   }

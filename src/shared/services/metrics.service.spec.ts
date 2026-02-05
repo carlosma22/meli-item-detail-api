@@ -7,7 +7,7 @@ describe('MetricsService', () => {
 
   beforeEach(async () => {
     register.clear();
-    
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [MetricsService],
     }).compile();
@@ -63,7 +63,7 @@ describe('MetricsService', () => {
   describe('getMetrics', () => {
     it('should return metrics in Prometheus format', async () => {
       const metrics = await service.getMetrics();
-      
+
       expect(metrics).toBeDefined();
       expect(typeof metrics).toBe('string');
       expect(metrics).toContain('# HELP');

@@ -1,6 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { SearchItemsUseCase, SearchItemsResult } from '@domain/ports/inbound/search-items.use-case';
-import { ItemRepositoryPort, ITEM_REPOSITORY_PORT } from '@domain/ports/outbound/item.repository.port';
+import {
+  ItemRepositoryPort,
+  ITEM_REPOSITORY_PORT,
+} from '@domain/ports/outbound/item.repository.port';
 import { SearchQuery } from '@domain/value-objects/search-query.vo';
 import { Pagination } from '@domain/value-objects/pagination.vo';
 import { InvalidSearchQueryException } from '@domain/exceptions/domain.exception';
