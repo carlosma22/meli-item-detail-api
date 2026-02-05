@@ -64,7 +64,12 @@ src/
 
 ### Observabilidad
 - **Logging Estructurado**: Pino logger con formato JSON
-- **Métricas**: Prometheus metrics
+- **Métricas Completas**: Sistema de métricas con Prometheus
+  - Métricas HTTP automáticas (requests, latencia, errores)
+  - Métricas de negocio (items, búsquedas)
+  - Métricas de cache (hit rate, misses)
+  - Métricas de API externa (llamadas, latencia, errores)
+  - Métricas del sistema (CPU, memoria, event loop)
 - **Health Checks**: Endpoints de salud con @nestjs/terminus
 
 ### Escalabilidad
@@ -178,6 +183,21 @@ GET /health
 ```http
 GET /metrics
 ```
+
+**Documentación completa**: Ver [`METRICS.md`](./METRICS.md) para detalles de todas las métricas disponibles y queries PromQL.
+
+#### Grafana (Visualización)
+```
+URL: http://localhost:3002
+Usuario: admin
+Contraseña: admin
+```
+
+**Dashboards incluidos:**
+- Item API - Overview (métricas generales)
+- Item API - Business Metrics (métricas de negocio)
+
+**Documentación completa**: Ver [`GRAFANA.md`](./GRAFANA.md) para guía de uso y configuración.
 
 ### Documentación Swagger
 

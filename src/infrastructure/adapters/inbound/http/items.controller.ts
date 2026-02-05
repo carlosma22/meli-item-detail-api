@@ -38,7 +38,7 @@ export class ItemsController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get item by ID' })
-  @ApiParam({ name: 'id', example: 'MLA123456789' })
+  @ApiParam({ name: 'id', example: 'MLA1100002000' })
   @ApiResponse({ status: 200, description: 'Item found', type: ItemResponseDto })
   @ApiResponse({ status: 404, description: 'Item not found' })
   async getItem(@Param('id') id: string): Promise<ItemResponseDto> {
@@ -49,7 +49,7 @@ export class ItemsController {
   @Get(':id/description')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get item description' })
-  @ApiParam({ name: 'id', example: 'MLA123456789' })
+  @ApiParam({ name: 'id', example: 'MLA1100002000' })
   @ApiResponse({ status: 200, description: 'Description found', type: ItemDescriptionResponseDto })
   @ApiResponse({ status: 404, description: 'Description not found' })
   async getDescription(@Param('id') id: string): Promise<ItemDescriptionResponseDto> {
