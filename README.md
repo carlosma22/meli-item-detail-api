@@ -44,38 +44,64 @@ src/
 - **Domain-Driven Design**: Entidades ricas y Value Objects
 - **SOLID Principles**: Código mantenible y escalable
 - **Dependency Injection**: IoC container de NestJS
+- **Redis-First Architecture**: Datos precargados en Redis para máximo rendimiento
 
 ### Capa de Dominio
-- **Entidades**: `Item`, `ItemDescription` con lógica de negocio
-- **Value Objects**: `Pagination`, `SearchQuery` con validaciones
-- **Puertos Inbound**: Interfaces de casos de uso
+- **Entidades**: `Item`, `ItemDescription` con lógica de negocio y validaciones
+- **Value Objects**: `Pagination`, `SearchQuery` con validaciones inmutables
+- **Puertos Inbound**: Interfaces de casos de uso (`GetItemUseCase`, `GetItemDescriptionUseCase`, `SearchItemsUseCase`)
 - **Puertos Outbound**: Interfaces para repositorios, HTTP, cache
-- **Excepciones**: Excepciones específicas del dominio
+- **Excepciones**: Excepciones específicas del dominio (`ItemNotFoundException`, `ItemDescriptionNotFoundException`, `InvalidSearchQueryException`)
 
 ### Capa de Aplicación
 - **Use Cases**: Implementación de lógica de aplicación
+  - `GetItemService`: Obtener detalle de producto
+  - `GetItemDescriptionService`: Obtener descripción de producto
+  - `SearchItemsService`: Búsqueda de productos con paginación
 - **DTOs**: Transformación entre dominio y presentación
+  - `ItemResponseDto`, `ItemDescriptionResponseDto`, `SearchResponseDto`
 
 ### Capa de Infraestructura
-- **Adaptadores HTTP**: Controllers REST
-- **Adaptadores Repository**: Implementación con MercadoLibre API
-- **Adaptadores Cache**: Implementación con Redis
-- **Adaptadores HTTP Client**: Implementación con Axios
+- **Adaptadores Inbound (HTTP)**:
+  - `ItemsController`: Endpoints REST para items
+  - `HealthController`: Health checks con @nestjs/terminus
+  - `MetricsController`: Endpoint de métricas Prometheus
+- **Adaptadores Outbound**:
+  - `MeliItemRepository`: Implementación del repositorio (Redis-first)
+  - `RedisCacheAdapter`: Implementación de cache con Redis
+  - `AxiosHttpClientAdapter`: Cliente HTTP para APIs externas
+- **Servicios**:
+  - `DataSeederService`: Carga automática de datos desde JSON a Redis al iniciar
+  - `MetricsService`: Sistema completo de métricas con prom-client
 
-### Observabilidad
+### Observabilidad y Monitoreo
 - **Logging Estructurado**: Pino logger con formato JSON
+  - Logs en desarrollo con pino-pretty (colorizado)
+  - Logs en producción en formato JSON
+  - Interceptor de logging para todas las requests
 - **Métricas Completas**: Sistema de métricas con Prometheus
-  - Métricas HTTP automáticas (requests, latencia, errores)
-  - Métricas de negocio (items, búsquedas)
-  - Métricas de cache (hit rate, misses)
-  - Métricas de API externa (llamadas, latencia, errores)
-  - Métricas del sistema (CPU, memoria, event loop)
+  - **Métricas HTTP**: requests totales, duración, requests en progreso
+  - **Métricas de Negocio**: items recuperados, búsquedas realizadas
+  - **Métricas de Cache**: cache hits/misses por operación
+  - **Métricas de API Externa**: llamadas, errores, latencia a MercadoLibre API
+  - **Métricas del Sistema**: CPU, memoria, event loop (default metrics)
 - **Health Checks**: Endpoints de salud con @nestjs/terminus
+  - Health check de Redis
+  - Health check general de la aplicación
+- **Grafana**: Dashboards preconfigurables para visualización
+- **Interceptores**:
+  - `MetricsInterceptor`: Captura automática de métricas HTTP
+  - `LoggingInterceptor`: Logging estructurado de requests
 
-### Escalabilidad
-- **Caching**: Redis para caché distribuido
-- **Rate Limiting**: Throttling con @nestjs/throttler
-- **Paginación**: Implementada en búsquedas
+### Escalabilidad y Performance
+- **Redis-First Strategy**: Todos los datos precargados en Redis al iniciar
+  - Sin llamadas a APIs externas en runtime (máxima velocidad)
+  - Data seeding automático desde archivo JSON
+  - TTL configurable para expiración de cache
+- **Rate Limiting**: Throttling con @nestjs/throttler (configurable)
+- **Paginación**: Implementada en búsquedas con Value Objects
+- **Búsqueda Optimizada**: Búsqueda en memoria sobre datos en Redis
+- **Validación**: Validación automática de DTOs con class-validator
 
 ## 📋 Requisitos
 
@@ -154,7 +180,26 @@ GET /api/v1/items/:id
 
 **Ejemplo:**
 ```bash
-curl http://localhost:3000/api/v1/items/MLA123456789
+curl http://localhost:3000/api/v1/items/MLA1100002000
+```
+
+**Respuesta:**
+```json
+{
+  "id": "MLA1100002000",
+  "title": "Producto ejemplo",
+  "price": 1500.00,
+  "currencyId": "ARS",
+  "availableQuantity": 10,
+  "condition": "new",
+  "thumbnail": "https://...",
+  "pictures": ["https://..."],
+  "seller": {
+    "id": 123456,
+    "nickname": "VENDEDOR"
+  },
+  "attributes": [...]
+}
 ```
 
 #### Obtener descripción de un producto
@@ -162,14 +207,38 @@ curl http://localhost:3000/api/v1/items/MLA123456789
 GET /api/v1/items/:id/description
 ```
 
+**Ejemplo:**
+```bash
+curl http://localhost:3000/api/v1/items/MLA1100002000/description
+```
+
 #### Buscar productos (con paginación)
 ```http
-GET /api/v1/items/search/:query?page=1&limit=10
+GET /api/v1/items/search?query=laptop&page=1&limit=10
 ```
+
+**Nota**: El parámetro `query` es opcional. Si se omite, devuelve todos los items.
 
 **Ejemplo:**
 ```bash
-curl "http://localhost:3000/api/v1/items/search/laptop?page=1&limit=10"
+# Buscar productos
+curl "http://localhost:3000/api/v1/items/search?query=laptop&page=1&limit=10"
+
+# Obtener todos los productos
+curl "http://localhost:3000/api/v1/items/search?page=1&limit=20"
+```
+
+**Respuesta:**
+```json
+{
+  "items": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 150,
+    "totalPages": 15
+  }
+}
 ```
 
 ### Health & Monitoring
@@ -184,7 +253,21 @@ GET /health
 GET /metrics
 ```
 
-**Documentación completa**: Ver [`METRICS.md`](./METRICS.md) para detalles de todas las métricas disponibles y queries PromQL.
+**Métricas disponibles:**
+- `http_requests_total`: Total de requests HTTP
+- `http_request_duration_seconds`: Duración de requests
+- `http_requests_in_progress`: Requests en progreso
+- `items_retrieved_total`: Items recuperados
+- `item_searches_total`: Búsquedas realizadas
+- `cache_hits_total` / `cache_misses_total`: Estadísticas de cache
+- `external_api_calls_total`: Llamadas a APIs externas
+- `external_api_duration_seconds`: Latencia de APIs externas
+- Métricas por defecto de Node.js (CPU, memoria, etc.)
+
+#### Prometheus (Scraping)
+```
+URL: http://localhost:9093
+```
 
 #### Grafana (Visualización)
 ```
@@ -193,11 +276,9 @@ Usuario: admin
 Contraseña: admin
 ```
 
-**Dashboards incluidos:**
-- Item API - Overview (métricas generales)
-- Item API - Business Metrics (métricas de negocio)
-
-**Documentación completa**: Ver [`GRAFANA.md`](./GRAFANA.md) para guía de uso y configuración.
+**Configuración:**
+- Prometheus como datasource preconfigurado
+- Dashboards disponibles en `./grafana/dashboards/`
 
 ### Documentación Swagger
 
@@ -224,6 +305,18 @@ npm run test:watch
 
 ## 🏗️ Arquitectura Hexagonal - Detalles
 
+### Estrategia de Datos: Redis-First
+
+Esta API implementa una estrategia **Redis-First** donde:
+
+1. **Al iniciar la aplicación**: El `DataSeederService` carga automáticamente datos desde `items-seed.json` a Redis
+2. **En runtime**: Todas las consultas se resuelven desde Redis (sin llamadas a APIs externas)
+3. **Ventajas**:
+   - ⚡ Respuestas ultra-rápidas (< 10ms)
+   - 🛡️ Sin dependencia de APIs externas en runtime
+   - 📊 Control total sobre los datos disponibles
+   - 💰 Sin costos de API rate limiting
+
 ### Flujo de una Request
 
 ```
@@ -235,10 +328,12 @@ HTTP Request
     ↓
 [Repository Port] (Domain) ← implements → [Repository] (Outbound Adapter)
     ↓
-[HTTP Client Port] (Domain) ← implements → [Axios Adapter] (Outbound Adapter)
+[Cache Port] (Domain) ← implements → [Redis Adapter] (Outbound Adapter)
     ↓
-External API (MercadoLibre)
+Redis (Datos precargados)
 ```
+
+**Nota**: El repositorio incluye métodos `loadItemFromApi()` y `loadDescriptionFromApi()` que pueden ser usados por el seeder o scripts externos para cargar datos desde MercadoLibre API, pero NO se usan en las requests normales.
 
 ### Ventajas de esta Arquitectura
 
@@ -322,20 +417,24 @@ npm run test:e2e       # Tests end-to-end
 
 ## 🎯 Mejores Prácticas Implementadas
 
-✅ Arquitectura Hexagonal (Ports & Adapters)  
-✅ Domain-Driven Design  
-✅ SOLID Principles  
-✅ Dependency Inversion  
-✅ TypeScript estricto  
-✅ Validación de DTOs  
-✅ Logging estructurado  
-✅ Métricas y observabilidad  
-✅ Caching con Redis  
-✅ Rate limiting  
-✅ Health checks  
-✅ Documentación Swagger  
-✅ Docker multi-stage builds  
-✅ Tests unitarios  
+✅ **Arquitectura Hexagonal** (Ports & Adapters)  
+✅ **Domain-Driven Design** (Entidades, Value Objects, Excepciones de dominio)  
+✅ **SOLID Principles** (Dependency Inversion, Single Responsibility)  
+✅ **TypeScript estricto** con path aliases (@domain, @application, @infrastructure)  
+✅ **Validación de DTOs** con class-validator y class-transformer  
+✅ **Logging estructurado** con Pino (JSON en producción, pretty en desarrollo)  
+✅ **Métricas y observabilidad** con Prometheus + Grafana  
+✅ **Caching estratégico** con Redis (Redis-First architecture)  
+✅ **Rate limiting** con @nestjs/throttler  
+✅ **Health checks** con @nestjs/terminus  
+✅ **Documentación Swagger** interactiva  
+✅ **Docker multi-stage builds** optimizados  
+✅ **Tests unitarios** con Jest (entidades, use cases, controllers)  
+✅ **Global Exception Filters** para manejo centralizado de errores  
+✅ **Interceptores** para logging y métricas automáticas  
+✅ **Data Seeding** automático al iniciar la aplicación  
+✅ **Security** con Helmet y CORS configurables  
+✅ **Git Hooks** con Husky y lint-staged para calidad de código  
 
 ## 📄 Licencia
 
