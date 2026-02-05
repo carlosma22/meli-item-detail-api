@@ -143,5 +143,55 @@ describe('ItemsController', () => {
       expect(result.items).toHaveLength(0);
       expect(mockSearchItemsUseCase.execute).toHaveBeenCalledWith('', 1, 10);
     });
+
+    it('should use default values when page and limit are not provided', async () => {
+      const mockPagination = {
+        toObject: () => ({
+          page: 1,
+          limit: 10,
+          total: 1,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        }),
+      };
+
+      const mockSearchResult = {
+        items: [mockItem],
+        pagination: mockPagination,
+      };
+
+      mockSearchItemsUseCase.execute.mockResolvedValue(mockSearchResult);
+
+      const result = await controller.search({ query: 'test' } as any);
+
+      expect(result).toBeDefined();
+      expect(mockSearchItemsUseCase.execute).toHaveBeenCalledWith('test', 1, 10);
+    });
+
+    it('should use default query when query is not provided', async () => {
+      const mockPagination = {
+        toObject: () => ({
+          page: 1,
+          limit: 10,
+          total: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        }),
+      };
+
+      const mockSearchResult = {
+        items: [],
+        pagination: mockPagination,
+      };
+
+      mockSearchItemsUseCase.execute.mockResolvedValue(mockSearchResult);
+
+      const result = await controller.search({} as any);
+
+      expect(result).toBeDefined();
+      expect(mockSearchItemsUseCase.execute).toHaveBeenCalledWith('', 1, 10);
+    });
   });
 });

@@ -31,4 +31,20 @@ npm audit --audit-level=high || {
   exit 1
 }
 
+# SonarCloud Quality Gate check (optional - requires sonar-scanner-cli)
+echo "📊 Checking SonarCloud Quality Gates..."
+if command -v sonar-scanner &> /dev/null; then
+  echo "Running SonarCloud analysis..."
+  sonar-scanner \
+    -Dsonar.qualitygate.wait=true \
+    -Dsonar.login=${SONAR_TOKEN:-} || {
+    echo "⚠️  SonarCloud quality gate failed or SONAR_TOKEN not set"
+    echo "To enable SonarCloud checks locally, install sonar-scanner-cli and set SONAR_TOKEN"
+    echo "Continuing without SonarCloud validation..."
+  }
+else
+  echo "ℹ️  sonar-scanner not installed. Skipping local SonarCloud check."
+  echo "Quality gates will be validated in CI/CD pipeline."
+fi
+
 echo "✅ Pre-push checks passed!"
