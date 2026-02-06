@@ -152,6 +152,7 @@ Variables de entorno principales (`.env`):
 NODE_ENV=development
 PORT=3000
 API_PREFIX=api/v1
+URL_API=http://localhost:3000/api/v1
 
 # MercadoLibre API
 MELI_API_BASE_URL=https://api.mercadolibre.com
@@ -442,7 +443,7 @@ MIT
 
 ## 👤 Autor
 
-Backend Senior Developer
+Carlos Pujol - Backend Senior Developer
 
 ---
 

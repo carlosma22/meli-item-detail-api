@@ -1,20 +1,47 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Counter, Histogram, Gauge, register, collectDefaultMetrics } from 'prom-client';
 
+/**
+ * Servicio centralizado para gestionar todas las métricas de la aplicación.
+ * 
+ * Utiliza prom-client para exponer métricas en formato Prometheus.
+ * Las métricas se agrupan en:
+ * - HTTP: requests, duración, requests en progreso
+ * - Negocio: items recuperados, búsquedas realizadas
+ * - Cache: hits y misses
+ * - APIs Externas: llamadas, errores, duración
+ * - Sistema: CPU, memoria, event loop (default metrics)
+ * 
+ * Todas las métricas se exponen en el endpoint /metrics.
+ */
 @Injectable()
 export class MetricsService implements OnModuleInit {
+  // Métricas HTTP
   private readonly httpRequestsTotal: Counter;
   private readonly httpRequestDuration: Histogram;
   private readonly httpRequestsInProgress: Gauge;
+  
+  // Métricas de negocio
   private readonly itemsRetrievedTotal: Counter;
   private readonly itemSearchesTotal: Counter;
+  
+  // Métricas de cache
   private readonly cacheHitsTotal: Counter;
   private readonly cacheMissesTotal: Counter;
+  
+  // Métricas de APIs externas
   private readonly externalApiCallsTotal: Counter;
   private readonly externalApiErrorsTotal: Counter;
   private readonly externalApiDuration: Histogram;
 
+  /**
+   * Constructor que inicializa todas las métricas.
+   * 
+   * Las métricas se registran en el registro global de Prometheus.
+   * También se habilitan las métricas por defecto de Node.js.
+   */
   constructor() {
+    // Habilitar métricas por defecto (CPU, memoria, event loop, etc.)
     collectDefaultMetrics({ register });
 
     this.httpRequestsTotal = new Counter({

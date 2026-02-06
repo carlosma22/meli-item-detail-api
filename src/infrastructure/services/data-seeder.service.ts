@@ -5,6 +5,20 @@ import { Item, Seller, ItemAttribute } from '@domain/entities/item.entity';
 import { ItemDescription } from '@domain/entities/item-description.entity';
 import * as itemsSeedData from '../data/items-seed.json';
 
+/**
+ * Servicio que implementa la estrategia Redis-First mediante data seeding.
+ * 
+ * Este servicio se ejecuta automáticamente al iniciar la aplicación (OnModuleInit)
+ * y carga datos desde un archivo JSON local a Redis.
+ * 
+ * Estrategia:
+ * 1. Verifica si ya existen datos en Redis (evita re-seeding)
+ * 2. Lee datos desde items-seed.json
+ * 3. Crea entidades de dominio (con validación)
+ * 4. Guarda en Redis con TTL configurable
+ * 
+ * Esto permite que la API funcione sin dependencia de APIs externas en runtime.
+ */
 @Injectable()
 export class DataSeederService implements OnModuleInit {
   private readonly logger = new Logger(DataSeederService.name);
@@ -13,6 +27,12 @@ export class DataSeederService implements OnModuleInit {
     : (itemsSeedData as any).default || [];
   private readonly cacheTtl: number;
 
+  /**
+   * Constructor con inyección de dependencias.
+   * 
+   * @param cache - Puerto de cache para guardar datos en Redis
+   * @param configService - Servicio de configuración para obtener TTL
+   */
   constructor(
     @Inject(CACHE_PORT)
     private readonly cache: CachePort,
@@ -21,6 +41,18 @@ export class DataSeederService implements OnModuleInit {
     this.cacheTtl = this.configService.get<number>('redis.ttl', 3600);
   }
 
+  /**
+   * Hook del ciclo de vida de NestJS que se ejecuta al inicializar el módulo.
+   * 
+   * Flujo:
+   * 1. Valida que el archivo JSON se haya cargado correctamente
+   * 2. Verifica si ya existen datos en Redis (idempotencia)
+   * 3. Si no hay datos, ejecuta el proceso de seeding
+   * 4. Registra logs detallados del proceso
+   * 
+   * Este método garantiza que la aplicación siempre tenga datos disponibles
+   * en Redis antes de empezar a recibir requests.
+   */
   async onModuleInit() {
     this.logger.log('=== DATA SEEDER INITIALIZED ===');
 
@@ -36,7 +68,7 @@ export class DataSeederService implements OnModuleInit {
     this.logger.log(`First item ID: ${this.itemsData[0]?.id}`);
 
     try {
-      // Verificar si al menos un item ya existe en Redis
+      // Verificar si al menos un item ya existe en Redis (idempotencia)
       const firstItemKey = `item:${this.itemsData[0].id}`;
       this.logger.log(`Checking if item exists in Redis: ${firstItemKey}`);
 
@@ -55,6 +87,17 @@ export class DataSeederService implements OnModuleInit {
     }
   }
 
+  /**
+   * Método privado que ejecuta el proceso de seeding.
+   * 
+   * Para cada item en el JSON:
+   * 1. Crea entidades de dominio (Seller, ItemAttribute, Item)
+   * 2. Las entidades se auto-validan en sus constructores
+   * 3. Guarda en Redis con patrón de clave 'item:{id}'
+   * 4. Si existe descripción, la guarda con clave 'description:{id}'
+   * 
+   * Registra progreso cada 50 items y muestra resumen al final.
+   */
   private async seedItems() {
     this.logger.log('>>> Starting items seeding from local JSON...');
     let itemsCreated = 0;
@@ -67,6 +110,7 @@ export class DataSeederService implements OnModuleInit {
       const itemData = this.itemsData[i];
 
       try {
+        // Mostrar progreso cada 50 items
         if (i % 50 === 0) {
           this.logger.log(`Progress: ${i}/${this.itemsData.length} items processed`);
         }

@@ -10,6 +10,7 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+*.udg
 
 # OS
 .DS_Store
@@ -20,7 +21,7 @@ lerna-debug.log*
 
 # IDEs and editors
 /.idea
-.project
+.project 
 .classpath
 .c9/
 *.launch
