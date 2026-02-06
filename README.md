@@ -370,16 +370,6 @@ export class GetItemService implements GetItemUseCase {
 }
 ```
 
-## 📊 Comparación con Arquitectura Tradicional
-
-| Aspecto | Arquitectura Tradicional | Arquitectura Hexagonal |
-|---------|-------------------------|------------------------|
-| **Dependencias** | Dominio depende de infraestructura | Infraestructura depende de dominio |
-| **Testing** | Difícil mockear dependencias | Fácil mockear puertos |
-| **Cambios** | Cambios en DB afectan lógica | Cambios en adaptadores aislados |
-| **Claridad** | Responsabilidades mezcladas | Separación clara por capas |
-| **Reutilización** | Código acoplado | Dominio reutilizable |
-
 ## 🚀 Despliegue
 
 ### Build de Producción
@@ -444,7 +434,3 @@ MIT
 ## 👤 Autor
 
 Carlos Pujol - Backend Senior Developer
-
----
-
-**Nota**: Este proyecto demuestra la implementación de Arquitectura Hexagonal con NestJS, separando claramente el dominio de la infraestructura y facilitando el testing y mantenimiento del código.
