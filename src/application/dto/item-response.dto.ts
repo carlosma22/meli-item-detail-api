@@ -1,6 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Item, Seller, ItemAttribute } from '@domain/entities/item.entity';
 
+/**
+ * DTO para representar la información del vendedor en las respuestas HTTP.
+ * Transforma la entidad Seller del dominio a formato JSON para la API.
+ */
 export class SellerDto {
   @ApiProperty({ example: 123456789 })
   id: number;
@@ -11,6 +15,12 @@ export class SellerDto {
   @ApiProperty({ example: 'https://www.mercadolibre.com.ar/perfil/VENDEDOR', required: false })
   permalink?: string;
 
+  /**
+   * Método factory para crear un DTO desde la entidad de dominio.
+   * 
+   * @param seller - Entidad Seller del dominio
+   * @returns DTO listo para serialización JSON
+   */
   static fromDomain(seller: Seller): SellerDto {
     const dto = new SellerDto();
     dto.id = seller.id;
@@ -20,6 +30,10 @@ export class SellerDto {
   }
 }
 
+/**
+ * DTO para representar un atributo técnico del producto.
+ * Los atributos describen características como marca, modelo, color, etc.
+ */
 export class ItemAttributeDto {
   @ApiProperty({ example: 'BRAND' })
   id: string;
@@ -30,6 +44,12 @@ export class ItemAttributeDto {
   @ApiProperty({ example: 'Samsung' })
   valueName: string;
 
+  /**
+   * Transforma un atributo de dominio a DTO.
+   * 
+   * @param attribute - Entidad ItemAttribute del dominio
+   * @returns DTO para respuesta HTTP
+   */
   static fromDomain(attribute: ItemAttribute): ItemAttributeDto {
     const dto = new ItemAttributeDto();
     dto.id = attribute.id;
@@ -39,6 +59,16 @@ export class ItemAttributeDto {
   }
 }
 
+/**
+ * DTO principal para las respuestas de items en la API.
+ * 
+ * Transforma la entidad Item del dominio a formato JSON,
+ * incluyendo decoradores de Swagger para documentación automática.
+ * 
+ * Usado en los endpoints:
+ * - GET /api/v1/items/:id
+ * - GET /api/v1/items/search
+ */
 export class ItemResponseDto {
   @ApiProperty({ example: 'MLA123456789' })
   id: string;
@@ -76,6 +106,17 @@ export class ItemResponseDto {
   @ApiProperty({ example: 'https://www.mercadolibre.com.ar/...', required: false })
   permalink?: string;
 
+  /**
+   * Método factory para transformar una entidad de dominio a DTO.
+   * 
+   * Realiza el mapeo completo de la entidad Item incluyendo:
+   * - Propiedades simples (id, title, price, etc.)
+   * - Entidad anidada Seller
+   * - Array de ItemAttribute
+   * 
+   * @param item - Entidad Item del dominio
+   * @returns DTO completo listo para serialización JSON
+   */
   static fromDomain(item: Item): ItemResponseDto {
     const dto = new ItemResponseDto();
     dto.id = item.id;
